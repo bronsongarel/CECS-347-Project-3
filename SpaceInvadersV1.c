@@ -1,4 +1,4 @@
-// SpaceInvaders.c
+// SpaceInvadersP1.c
 // Runs on TM4C123
 // CECS 347 Project 3 - Space Invaders
 // Group number: 9
