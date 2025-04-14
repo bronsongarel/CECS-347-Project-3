@@ -1,4 +1,4 @@
-// SpaceInvaders.c
+// SpaceInvadersV2.c
 // Runs on TM4C123
 // Starter file for CECS 347 Project 2 - Space Invaders
 // Min He
