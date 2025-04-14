@@ -1,9 +1,9 @@
 // Nokia5110.c
 // Runs on TM4C123
-// CECS 347 Project 2 - Space Invaders
+// CECS 347 Project 3 - Space Invaders
+// Group number: 9
+// Group members: Jose Ambriz, Bronson Garel, Jonathan Kim, Kyle Wyckoff
 // SS21 is used to interface with Nokia5110.
-// Group number:
-// Group members:
 
 #include "Nokia5110.h"
 #include "tm4c123gh6pm.h"
@@ -86,8 +86,8 @@ void Nokia5110_Init(void){
   SSI2_CR1_R &= ~SSI_CR1_MS;            // master mode
                                         // configure for system clock/PLL baud clock source
   SSI2_CC_R = (SSI2_CC_R&~SSI_CC_CS_M)+SSI_CC_CS_SYSPLL;
-                                        // clock divider for 3.125 MHz SSIClk (50 MHz PIOSC/16)
-  SSI2_CPSR_R = (SSI2_CPSR_R&~SSI_CPSR_CPSDVSR_M)+16;
+                                        // clock divider for 3.809 MHz SSIClk (80 MHz PIOSC/21)
+  SSI2_CPSR_R = (SSI2_CPSR_R&~SSI_CPSR_CPSDVSR_M)+21;
   SSI2_CR0_R &= ~(SSI_CR0_SCR_M |       // SCR = 0 (3.125 Mbps data rate)
                   SSI_CR0_SPH |         // SPH = 0
                   SSI_CR0_SPO);         // SPO = 0
