@@ -1,7 +1,8 @@
 // switches.c
-// Runs on TM4C123, starter file for space invader game
-// Min He
-// November 15, 2022
+// Runs on TM4C123
+// CECS 347 Project 3 - Space Invaders
+// Group number: 9
+// Group members: Jose Ambriz, Bronson Garel, Jonathan Kim, Kyle Wyckoff
 
 #include "tm4c123gh6pm.h"
 #include <stdint.h>
@@ -25,6 +26,6 @@ void Switch_Init(void){// Initilize port F and arm PF4, PF0 for falling edge int
   GPIO_PORTF_IEV_R |= 0x11;    //     PF4,PF0 rising edge event
   GPIO_PORTF_ICR_R = 0x11;      // (e) clear flags 4,0
   GPIO_PORTF_IM_R |= 0x11;      // (f) arm interrupt on PF4,PF0
-  NVIC_PRI7_R = (NVIC_PRI7_R&0xFF1FFFFF)|0x00400000; // (g) bits:23-21 for PORTF, set priority to 5
+  NVIC_PRI7_R = (NVIC_PRI7_R&0xFF1FFFFF)|0x00400000; // (g) bits:23-21 for PORTF, set priority to 1
   NVIC_EN0_R |= 0x40000000;      // (h) enable interrupt 30 in NVIC
 }
