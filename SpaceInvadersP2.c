@@ -230,10 +230,12 @@ void Start_Prompt(void);
 void End_Prompt(void);
 void System_Init(void);
 void enemyInit(void);
+//void bulletInit(void);
+
 // global variables used for game control
 bool time_to_draw=false;
 bool game_s=false;
-bool score=false;
+uint8_t score= 0;
 uint8_t x_axis;
 
 int main(void){
@@ -254,15 +256,15 @@ int main(void){
         Move();
         Draw();
         //time_to_draw -= 1;
-				//SysTick_Wait_0_1sec();
-				Delay100ms(10);
+				SysTick_Wait_0_1sec();
+				//Delay100ms(10);
 				if(Enemy[0].x >= MAX_X_AXIS){
 					game_s = false;
 					End_Prompt();
-		      Delay100ms(300);
-					//for(int i = 0; i < 30; i++){
-					//	SysTick_Wait_0_1sec();
-					//}
+		      //Delay100ms(300);
+					for(int i = 0; i < 30; i++){
+					SysTick_Wait_0_1sec();
+					}
         
 
 
@@ -317,6 +319,16 @@ void enemyInit(void){
 	PlayerShip.life = 1;
 }
 
+
+
+//void bulletInit(void){
+//	Nokia5110_Clear();
+//	Bullet.x = x_axis+7;      //set to current pot value 
+//	Bullet.y = 38;			    //slightly above ship height
+//	Bullet.image = Laser0;  //Lasers > Missiles
+//	Bullet.life = 1;				//Turn life on for move/draw
+	
+//}
   uint16_t count = 0;
 	uint8_t out[100];
 
@@ -335,7 +347,7 @@ void End_Prompt(void){
 	char out[100];
   uint8_t prompt[]="            Game Over   Nice Try!   Your Score";
   Nokia5110_Clear();
-	sprintf(out , "%s %d ",prompt, 2);
+	sprintf(out , "%s %d ",prompt, score);
 	//Nokia5110_PrintBMP(2, 36, SmallEnemyPointA[2], 0);  // update screen[]
   //Nokia5110_DisplayBuffer();      // draw buffer: take pixel information from screen[] snf update the LCD display
   Nokia5110_OutString(out);
@@ -361,7 +373,7 @@ void Game_Init(void){
 void Move(void){
   //uint8_t num_life = 0;
     
-	// V3: Move Bullet: detect hit or top of the screen. 
+
 	// V4: If a hit is detected, play the explosion sound
 
   // V1: Move enemies: modify x, check life:alive or dead: dead if right side reaches right screen border or detect a hit
@@ -385,12 +397,31 @@ void Move(void){
       }  
     }
 	}
-	x_axis = ADCValue_To_X_AXIS(ADC1_SS3_In(),MAX_X_AXIS);
-	PlayerShip.x = x_axis; 
-
+	
 
 	// V2: Read ADC and update player ship position: only x coordinate will be changed. 
+  x_axis = ADCValue_To_X_AXIS(ADC1_SS3_In(),MAX_X_AXIS);
+	PlayerShip.x = x_axis; 
 
+	
+	
+	// V3: Move Bullet: detect hit or top of the screen.
+  //if(Bullet.life == 1 && Bullet.y > 0){
+//		Bullet.y -=2;
+//	}	
+//	else{
+//		Bullet.life = 0; //Didnt hit anything
+//	}
+	//for(i=0;i<3;i++){ //For each enemy alive
+	//	if(Enemy[i].life == 1 && Bullet.life == 1){
+//			if(Enemy[i].x == Bullet.x && Bullet.y == Enemy[i].y ){
+//					score++;
+//					Enemy[i].life = 0;
+//					Bullet.life = 0;
+//			}
+//		
+//		}
+//	}
 //  if (num_life==0) {
 //    game_s = false;
 //  }
@@ -418,6 +449,10 @@ void Draw(void){
   PlayerShip.x = x_axis;  //set to current pot value in order to prevent jump
   Nokia5110_PrintBMP(PlayerShip.x, PlayerShip.y, PlayerShip.image, 0);  // update screen[]
 
+	//if(Bullet.life == 1){
+	//  Nokia5110_PrintBMP(Bullet.x, Bullet.y, Bullet.image, 0);  // update screen[]
+	//}
+	
   // V3: Update the bullet position in display buffer if there is one.
   //if (Bullet.life==ALIVE) {
 	
@@ -436,10 +471,13 @@ void GPIOPortF_Handler(void){    // called on release of either SW1 or SW2
 	// take care of button debounce
 	for(int i = 0; i < 1000000; i++){}
 	// SW1: shoot a bullet if there is none.
-  
+  //if((GPIO_PORTF_RIS_R&0x10) ){  // SW1 touch
+//		GPIO_PORTF_ICR_R = 0x10;  // acknowledge flag4	
+//		bulletInit();
+	}
 	// SW2: start the game, change the game status to ON
-	if((GPIO_PORTF_RIS_R&0x10) ){  // SW2 touch
-		GPIO_PORTF_ICR_R = 0x10;  // acknowledge flag4	
+	if((GPIO_PORTF_RIS_R&0x01) ){  // SW2 touch
+		GPIO_PORTF_ICR_R = 0x01;  // acknowledge flag0	
 		game_s = true;
 		enemyInit();
 	}
