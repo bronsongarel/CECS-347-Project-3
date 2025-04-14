@@ -1,33 +1,10 @@
 // SpaceInvaders.c
 // Runs on TM4C123
-// Starter file for CECS 347 Project 2 - Space Invaders
-// Min He
-// November 15, 2022
+// CECS 347 Project 3 - Space Invaders
+// Group number: 9
+// Group members: Jose Ambriz, Bronson Garel, Jonathan Kim, Kyle Wyckoff
 
-// Reference:
-// http://www.spaceinvaders.de/
-// sounds at http://www.classicgaming.cc/classics/spaceinvaders/sounds.php
-// http://www.classicgaming.cc/classics/spaceinvaders/playguide.php
-/* The original example code comes the books
-   "Embedded Systems: Real Time Interfacing to Arm Cortex M Microcontrollers",
-   ISBN: 978-1463590154, Jonathan Valvano, copyright (c) 2013
-
-   "Embedded Systems: Introduction to Arm Cortex M Microcontrollers",
-   ISBN: 978-1469998749, Jonathan Valvano, copyright (c) 2013
-
- Copyright 2013 by Jonathan W. Valvano, valvano@mail.utexas.edu
-    You may use, edit, run or distribute this file
-    as long as the above copyright notice remains
- THIS SOFTWARE IS PROVIDED "AS IS".  NO WARRANTIES, WHETHER EXPRESS, IMPLIED
- OR STATUTORY, INCLUDING, BUT NOT LIMITED TO, IMPLIED WARRANTIES OF
- MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE APPLY TO THIS SOFTWARE.
- VALVANO SHALL NOT, IN ANY CIRCUMSTANCES, BE LIABLE FOR SPECIAL, INCIDENTAL,
- OR CONSEQUENTIAL DAMAGES, FOR ANY REASON WHATSOEVER.
- For more information about my classes, my research, and my books, see
- http://users.ece.utexas.edu/~valvano/
- 
- */
- // ******* Required Hardware I/O connections*******************
+// ******* Required Hardware I/O connections*******************
 // Slide pot pin 1 connected to ground
 // Slide pot pin 2 connected to Ain8 (PE5)
 // Slide pot pin 3 connected to pne side of the 1k resistor
@@ -47,7 +24,6 @@
 // back light    (BL) not connected, consists of 4 white LEDs which draw ~80mA total
 // Ground        (Gnd) ground
 
-
 #include "tm4c123gh6pm.h"
 #include "Nokia5110.h"
 #include "PLL.h"
@@ -57,6 +33,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "stdio.h"
+
 // enemy that starts at the top of the screen (arms/mouth closed)
 // width=16 x height=10
 const unsigned char SmallEnemyPointA[][200] = {{
@@ -198,14 +175,15 @@ enum game_status{OVER,ON};
 enum life_status{DEAD, ALIVE};
 enum enemy_posture{CLOSE, OPEN};
 
-#define PLAYERW     ((unsigned char)PlayerShip0[18])
-#define PLAYERH     ((unsigned char)PlayerShip0[22])
-#define ENEMY10W    16  
-#define LASERH      9
-#define LASERW      2
-#define BULLETH     LASERH
-#define BULLETW     LASERW
-#define MAX_X_AXIS 83  // size of the LCD screen 48x84, X axis range: 0 to 83
+#define PLAYERW     	((unsigned char)PlayerShip0[18])
+#define PLAYERH     	((unsigned char)PlayerShip0[22])
+#define ENEMY10W    	16  
+#define LASERH      	9
+#define LASERW      	2
+#define BULLETH     	LASERH
+#define BULLETW     	LASERW
+#define MAX_X_AXIS 		83  // size of the LCD screen 48x84, X axis range: 0 to 83
+#define THREE_SECONDS 30
 
 struct State {
   uint8_t x;      // x coordinate
@@ -230,60 +208,40 @@ void Start_Prompt(void);
 void End_Prompt(void);
 void System_Init(void);
 void enemyInit(void);
+
 // global variables used for game control
 bool time_to_draw=false;
 bool game_s=false;
 bool score=false;
+uint16_t count = 0;
+uint8_t out[100];
 
 int main(void){
 	System_Init();
-	uint8_t out[100];
-  while(1){
-	  
-    Start_Prompt();
-		Draw();
 
-		while(game_s==false){};
+  while(1){
+    Start_Prompt();
+    
+		while(game_s==OVER){};
       
 		Game_Init(); // all sprites: 3 sprites
     Draw();
-		
-    while (game_s==true) {
-      //if (time_to_draw > 0){
+    while (game_s==ON) {
+      if (time_to_draw){
         Move();
         Draw();
-        //time_to_draw -= 1;
-				Delay100ms(10);
-
-				
-				if(Enemy[0].x >= MAX_X_AXIS){
-					game_s = false;
-					End_Prompt();
-		      Delay100ms(300);
-
-				}
-      //}
+        time_to_draw = 0;
+      }
     }
     
-    //End_Prompt();
-		//Draw();
-		//Delay100ms(10000);
-
+    End_Prompt();
   }
 }
-
-
-void Delay(uint32_t ulCount){
-  do{
-    ulCount--;
-	}while(ulCount);
-}
-
 
 void System_Init(void){
   DisableInterrupts();
   PLL_Init();                   // set system clock to 80 MHz
-  //SysTick_Init();
+  SysTick_Init();
   Switch_Init();
   //ADC1_SS3_Init();
   Nokia5110_Init();
@@ -307,14 +265,11 @@ void enemyInit(void){
   }
 }
 
-  uint16_t count = 0;
-	uint8_t out[100];
-
 // Display the game start prompt
 void Start_Prompt(void){
 	uint16_t count = 0;
 	uint8_t out[100];
-	char prompt[]="Space       Invader     Press SW2   To Start";
+	char prompt[]="            Space       Invader     Press SW2   To Start            ";
 	Nokia5110_Clear();
   Nokia5110_OutString(prompt);	
 }
@@ -329,14 +284,13 @@ void End_Prompt(void){
 	//Nokia5110_PrintBMP(2, 36, SmallEnemyPointA[2], 0);  // update screen[]
   //Nokia5110_DisplayBuffer();      // draw buffer: take pixel information from screen[] snf update the LCD display
   Nokia5110_OutString(out);
+	SysTick_BusyWait_0_1sec(THREE_SECONDS);
 }
 
 // Initialize the game: initialize all sprites and 
 // reset refresh control and game status.
 void Game_Init(void){
-  time_to_draw=50;
   score=0; // reset score
-	game_s = true;
 	
   // Version 1: add enemy initialization with close posture.
 	enemyInit();
@@ -378,9 +332,9 @@ void Move(void){
 
 	// V2: Read ADC and update player ship position: only x coordinate will be changed. 
 
-//  if (num_life==0) {
-//    game_s = false;
-//  }
+  if (Enemy[0].life==0) {
+    game_s = false;
+  }
 }
 
 // Update the screen: 
@@ -390,7 +344,7 @@ void Draw(void){
   static uint8_t enemy_posture = CLOSE;  // enemy start with close posture: SmallEnemyPointA
   uint8_t i;
   
-  if (game_s==false) return;
+  //if (game_s==false) return;
   
   Nokia5110_ClearBuffer();
   
@@ -408,13 +362,13 @@ void Draw(void){
 	
 	// V4: if bullet is just activated, play the shoot sound here
   //}
-
   Nokia5110_DisplayBuffer();      // Update the display with information in display buffer screen[].
 }
 
 // Control screen refresh rate. 
 void SysTick_Handler(void){
 	// signal time to refresh
+	time_to_draw = 1;
 }
 
 void GPIOPortF_Handler(void){    // called on release of either SW1 or SW2
@@ -423,23 +377,9 @@ void GPIOPortF_Handler(void){    // called on release of either SW1 or SW2
 	// SW1: shoot a bullet if there is none.
   
 	// SW2: start the game, change the game status to ON
-	if((GPIO_PORTF_RIS_R&0x10) ){  // SW2 touch
-		GPIO_PORTF_ICR_R = 0x10;  // acknowledge flag4	
-		game_s = true;
-		enemyInit();
+	if((GPIO_PORTF_RIS_R&0x01) ){  // SW2 touch
+		GPIO_PORTF_ICR_R = 0x01;  // acknowledge flag4	
+		game_s = ON;
+		SysTick_Wait_0_1sec();
 	}
-}
-
-// Delay function used for game over prompt timing control: 2s
-// To Do: modify the time constant used in the code to generate approximately 2s delay.
-
-void Delay100ms(uint32_t count){
-  uint32_t time;
-  while(count>0){
-    time = 72724;  // 0.1sec at 16 MHz
-    while(time){
-	  	time--;
-    }
-    count--;
-  }
 }
