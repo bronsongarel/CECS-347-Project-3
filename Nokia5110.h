@@ -1,33 +1,8 @@
-
 // Nokia5110.h
-// Runs on LM4F120/TM4C123
-// Use SSI2 to send an 8-bit code to the Nokia5110 48x84
-// pixel LCD to display text, images, or other information.
-// Daniel Valvano
-// September 16, 2013
-
-// Font table, initialization, and other functions based
-// off of Nokia_5110_Example from Spark Fun:
-// 7-17-2011
-// Spark Fun Electronics 2011
-// Nathan Seidle
-// http://dlnmh9ip6v2uc.cloudfront.net/datasheets/LCD/Monochrome/Nokia_5110_Example.pde
-
-// This example accompanies the book
-//   "Embedded Systems: Introduction to ARM Cortex M Microcontrollers",
-//   ISBN: 978-1469998749, Jonathan Valvano, copyright (c) 2014
-
-// Copyright 2014 by Jonathan W. Valvano, valvano@mail.utexas.edu
-//    You may use, edit, run or distribute this file
-//    as long as the above copyright notice remains
-// THIS SOFTWARE IS PROVIDED "AS IS".  NO WARRANTIES, WHETHER EXPRESS, IMPLIED
-// OR STATUTORY, INCLUDING, BUT NOT LIMITED TO, IMPLIED WARRANTIES OF
-// MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE APPLY TO THIS SOFTWARE.
-// VALVANO SHALL NOT, IN ANY CIRCUMSTANCES, BE LIABLE FOR SPECIAL, INCIDENTAL,
-// OR CONSEQUENTIAL DAMAGES, FOR ANY REASON WHATSOEVER.
-// For more information about my classes, my research, and my books, see
-// http://users.ece.utexas.edu/~valvano/
-// 
+// Runs on TM4C123
+// CECS 347 Project 3 - Space Invaders
+// Group number: 9
+// Group members: Jose Ambriz, Bronson Garel, Jonathan Kim, Kyle Wyckoff
 
 // Blue Nokia 5110
 // ---------------
