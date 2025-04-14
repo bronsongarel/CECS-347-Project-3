@@ -1,17 +1,28 @@
+// Systick.c
+// Runs on TM4C123
+// CECS 347 Project 2 - Space Invaders
+// Group number:
+// Group members:
+// By Min He
+// November 15, 2022
+#include "Systick.h"
+
+
+// SysTick.c
+// Runs on TM4C123
+// By Dr. Min He
+// December 10th, 2018
+
 #include <stdint.h>
 #include "SysTick.h"
 #include "tm4c123gh6pm.h"
 
 #define ONE_MICRO_SECOND          16     // number of machine cycles to generate 1us delay for 16MHz system clock
-#define 100_MICRO_SECONDS					1600
 void SysTick_Init(void){
   NVIC_ST_CTRL_R = 0;
   NVIC_ST_RELOAD_R = NVIC_ST_RELOAD_M; // number of counts to wait
   NVIC_ST_CURRENT_R = 0; // any value written to CURRENT clears   
 	NVIC_ST_CTRL_R |= NVIC_ST_CTRL_ENABLE+NVIC_ST_CTRL_CLK_SRC; // enable SysTick with core clock
-
-//Todo enable interrupts and cause systick handler to trigger on 100ms delay
-
 }
 
 // Disable Systick timer
@@ -33,4 +44,39 @@ void SysTick_Wait1us(uint8_t delay){
 	NVIC_ST_CTRL_R |= NVIC_ST_CTRL_ENABLE+NVIC_ST_CTRL_CLK_SRC;
   while((NVIC_ST_CTRL_R&NVIC_ST_CTRL_COUNT)==0); // wait for count flag
   NVIC_ST_CTRL_R = 0;
+}
+
+
+void SysTick_Wait(uint32_t delay){
+
+	NVIC_ST_RELOAD_R = delay - 1;
+  NVIC_ST_CURRENT_R = 0;                // any write to current clears it
+	NVIC_ST_CTRL_R |= NVIC_ST_CTRL_ENABLE;
+  
+  while(!(NVIC_ST_CTRL_R & NVIC_ST_CTRL_COUNT)){};
+	
+		NVIC_ST_CTRL_R &= ~NVIC_ST_CTRL_ENABLE;
+		
+	}
+
+	
+	
+void SysTick_Wait_0_1sec(void){
+	uint8_t count = 0;
+	while(count != 200){
+		if(count <= 192){
+			NVIC_ST_RELOAD_R = 27160;
+		}
+		else{
+			NVIC_ST_RELOAD_R = 65535;
+		}
+		NVIC_ST_CURRENT_R = 0;                // any write to current clears it
+		NVIC_ST_CTRL_R |= NVIC_ST_CTRL_ENABLE;
+		
+		while(!(NVIC_ST_CTRL_R & NVIC_ST_CTRL_COUNT)){};
+		
+			NVIC_ST_CTRL_R &= ~NVIC_ST_CTRL_ENABLE;
+		
+		count++;
+	}	
 }
