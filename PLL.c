@@ -1,8 +1,9 @@
 // PLL.c
 // Runs on TM4C123
 // CECS 347 Project 3 - Space Invaders
-// Group number:
-// Group members:
+// Group number: 9
+// Group members: Jose Ambriz, Bronson Garel, Jonathan Kim, Kyle Wyckoff
+
 #include <stdint.h>
 #include "PLL.h"
 #include "tm4c123gh6pm.h"
