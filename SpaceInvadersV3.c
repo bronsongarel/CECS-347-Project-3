@@ -1,33 +1,10 @@
-// SpaceInvadersV3.c
+// SpaceInvadersP1.c
 // Runs on TM4C123
-// Starter file for CECS 347 Project 2 - Space Invaders
-// Min He
-// November 15, 2022
+// CECS 347 Project 3 - Space Invaders
+// Group number: 9
+// Group members: Jose Ambriz, Bronson Garel, Jonathan Kim, Kyle Wyckoff
 
-// Reference:
-// http://www.spaceinvaders.de/
-// sounds at http://www.classicgaming.cc/classics/spaceinvaders/sounds.php
-// http://www.classicgaming.cc/classics/spaceinvaders/playguide.php
-/* The original example code comes the books
-   "Embedded Systems: Real Time Interfacing to Arm Cortex M Microcontrollers",
-   ISBN: 978-1463590154, Jonathan Valvano, copyright (c) 2013
-
-   "Embedded Systems: Introduction to Arm Cortex M Microcontrollers",
-   ISBN: 978-1469998749, Jonathan Valvano, copyright (c) 2013
-
- Copyright 2013 by Jonathan W. Valvano, valvano@mail.utexas.edu
-    You may use, edit, run or distribute this file
-    as long as the above copyright notice remains
- THIS SOFTWARE IS PROVIDED "AS IS".  NO WARRANTIES, WHETHER EXPRESS, IMPLIED
- OR STATUTORY, INCLUDING, BUT NOT LIMITED TO, IMPLIED WARRANTIES OF
- MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE APPLY TO THIS SOFTWARE.
- VALVANO SHALL NOT, IN ANY CIRCUMSTANCES, BE LIABLE FOR SPECIAL, INCIDENTAL,
- OR CONSEQUENTIAL DAMAGES, FOR ANY REASON WHATSOEVER.
- For more information about my classes, my research, and my books, see
- http://users.ece.utexas.edu/~valvano/
- 
- */
- // ******* Required Hardware I/O connections*******************
+// ******* Required Hardware I/O connections*******************
 // Slide pot pin 1 connected to ground
 // Slide pot pin 2 connected to Ain8 (PE5)
 // Slide pot pin 3 connected to pne side of the 1k resistor
@@ -46,8 +23,7 @@
 // 3.3V          (Vcc) power
 // back light    (BL) not connected, consists of 4 white LEDs which draw ~80mA total
 // Ground        (Gnd) ground
-
-
+/**/
 #include "tm4c123gh6pm.h"
 #include "Nokia5110.h"
 #include "PLL.h"
@@ -57,6 +33,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "stdio.h"
+
 // enemy that starts at the top of the screen (arms/mouth closed)
 // width=16 x height=10
 const unsigned char SmallEnemyPointA[][200] = {{
@@ -198,14 +175,15 @@ enum game_status{OVER,ON};
 enum life_status{DEAD, ALIVE};
 enum enemy_posture{CLOSE, OPEN};
 
-#define PLAYERW     ((unsigned char)PlayerShip0[18])
-#define PLAYERH     ((unsigned char)PlayerShip0[22])
-#define ENEMY10W    16  
-#define LASERH      9
-#define LASERW      2
-#define BULLETH     LASERH
-#define BULLETW     LASERW
-#define MAX_X_AXIS 83  // size of the LCD screen 48x84, X axis range: 0 to 83
+#define PLAYERW     	((unsigned char)PlayerShip0[18])
+#define PLAYERH     	((unsigned char)PlayerShip0[22])
+#define ENEMY10W    	16  
+#define LASERH      	9
+#define LASERW      	2
+#define BULLETH     	LASERH
+#define BULLETW     	LASERW
+#define MAX_X_AXIS 		83  // size of the LCD screen 48x84, X axis range: 0 to 83
+#define THREE_SECONDS 30
 
 struct State {
   uint8_t x;      // x coordinate
@@ -230,62 +208,37 @@ void Start_Prompt(void);
 void End_Prompt(void);
 void System_Init(void);
 void enemyInit(void);
-void bulletInit(void);
-
+void playerInit(void);
 // global variables used for game control
 bool time_to_draw=false;
 bool game_s=false;
-uint8_t score= 0;
+bool score=false;
+uint16_t count = 0;
+char out[100];
 uint8_t x_axis;
+void bulletInit(void);
 
 int main(void){
 	System_Init();
-	uint8_t out[100];
-  while(1){
-	  
-    Start_Prompt();
-		Draw();
 
-		while(game_s==false){};
+  while(1){
+    Start_Prompt();
+    
+		while(game_s==OVER){};
       
 		Game_Init(); // all sprites: 3 sprites
     Draw();
-		
-    while (game_s==true) {
-      //if (time_to_draw > 0){
+    while (game_s==ON) {
+      if (time_to_draw){
         Move();
         Draw();
-        //time_to_draw -= 1;
-				SysTick_Wait_0_1sec();
-				//Delay100ms(10);
-				if(Enemy[0].x >= MAX_X_AXIS){
-					game_s = false;
-					End_Prompt();
-		      //Delay100ms(300);
-					for(int i = 0; i < 30; i++){
-					SysTick_Wait_0_1sec();
-					}
-        
-
-
-				}
-      //}
+        time_to_draw = 0;
+      }
     }
     
-    //End_Prompt();
-		//Draw();
-		//Delay100ms(10000);
-
+    End_Prompt();
   }
 }
-
-
-void Delay(uint32_t ulCount){
-  do{
-    ulCount--;
-	}while(ulCount);
-}
-
 
 void System_Init(void){
   DisableInterrupts();
@@ -309,62 +262,58 @@ void enemyInit(void){
     Enemy[i].x = 20*i;
     Enemy[i].y = 10;
     Enemy[i].image = SmallEnemyPointA[i];
-    Enemy[i].life = 1;
+    Enemy[i].life = ALIVE;
 
   }
-	x_axis = ADCValue_To_X_AXIS(ADC1_SS3_In(),MAX_X_AXIS);
-	PlayerShip.x = x_axis;  //set to current pot value in order to prevent jump
-	PlayerShip.y = 40;
-	PlayerShip.image = PlayerShip0;
-	PlayerShip.life = 1;
 }
-
 
 
 void bulletInit(void){
 	Nokia5110_Clear();
-	Bullet.x = x_axis+7;      //set to current pot value 
+	Bullet.x = PlayerShip.x+8;      //set to current pot value 
 	Bullet.y = 38;			    //slightly above ship height
 	Bullet.image = Laser0;  //Lasers > Missiles
-	Bullet.life = 1;				//Turn life on for move/draw
+	Bullet.life = ALIVE;				//Turn life on for move/draw
 	
 }
-  uint16_t count = 0;
-	uint8_t out[100];
+
+void playerInit(void){
+	x_axis = ADCValue_To_X_AXIS(ADC1_SS3_In(),MAX_X_AXIS);
+	if(x_axis > 65){
+		x_axis = 65;
+	}
+	PlayerShip.x = x_axis;  //set to current pot value in order to prevent jump
+	PlayerShip.y = 40;
+	PlayerShip.image = PlayerShip0;
+	PlayerShip.life = ALIVE;
+}
 
 // Display the game start prompt
 void Start_Prompt(void){
-	uint16_t count = 0;
-	uint8_t out[100];
-	char prompt[]="Space       Invader     Press SW2   To Start";
+	char prompt[]="            Space       Invader     Press SW2   To Start            ";
 	Nokia5110_Clear();
   Nokia5110_OutString(prompt);	
 }
 
 // Display the game end prompt for 2 seconds
 void End_Prompt(void){
-	uint16_t count = 0;
-	char out[100];
   uint8_t prompt[]="            Game Over   Nice Try!   Your Score";
   Nokia5110_Clear();
-	sprintf(out , "%s %d ",prompt, score);
-	//Nokia5110_PrintBMP(2, 36, SmallEnemyPointA[2], 0);  // update screen[]
-  //Nokia5110_DisplayBuffer();      // draw buffer: take pixel information from screen[] snf update the LCD display
+	sprintf(out , "%s %d ",prompt, 2);
   Nokia5110_OutString(out);
+	SysTick_BusyWait_0_1sec(THREE_SECONDS);
 }
 
 // Initialize the game: initialize all sprites and 
 // reset refresh control and game status.
 void Game_Init(void){
-  time_to_draw=50;
   score=0; // reset score
-	game_s = true;
 	
   // Version 1: add enemy initialization with close posture.
 	enemyInit();
 
 	// Version 2: add player ship initialization
-  
+  playerInit();
   // Version 3: Add bullet initialization: you can choose Laser or Missile
 
 }
@@ -372,16 +321,13 @@ void Game_Init(void){
 // Update positions for all alive sprites.
 void Move(void){
   //uint8_t num_life = 0;
-    
-
-	// V4: If a hit is detected, play the explosion sound
-
+  
   // V1: Move enemies: modify x, check life:alive or dead: dead if right side reaches right screen border or detect a hit
   // Change postures for the enemies: two postures: open/close arms/legs
 	// If current position is close, then next position will be open; vise versa.
   uint8_t i;
   for(i=0;i<3;i++){
-		if(Enemy[i].life == 1){
+		if(Enemy[i].life == ALIVE){
 			if(Enemy[i].x < MAX_X_AXIS){
 				if(Enemy[i].x % 2 == 1){ //odd number
 					Enemy[i].image = SmallEnemyPointB[i];
@@ -393,40 +339,57 @@ void Move(void){
 				}
 				Enemy[i].x += 1;
 			}else{
-				Enemy[i].life = 0;
+				Enemy[i].life = DEAD;
       }  
     }
 	}
-	
 
-	// V2: Read ADC and update player ship position: only x coordinate will be changed. 
-  x_axis = ADCValue_To_X_AXIS(ADC1_SS3_In(),MAX_X_AXIS);
-	PlayerShip.x = x_axis; 
+	// V2: Read ADC and update player ship position: only x coordinate will be changed.
+  x_axis = ADCValue_To_X_AXIS(ADC1_SS3_In(),MAX_X_AXIS);	
+  //PlayerShip.x = x_axis;  //set to current pot value in order to prevent jump
+  if(x_axis < 62){
+		PlayerShip.x = x_axis; 
+	}
+	else{
+		PlayerShip.x = 61; 
+	}
+	Nokia5110_PrintBMP(PlayerShip.x, PlayerShip.y, PlayerShip.image, 0);  // update screen[]
 
-	
-	
-	// V3: Move Bullet: detect hit or top of the screen.
-  if(Bullet.life == 1 && Bullet.y > 0){
+  if (Enemy[0].life==DEAD) {
+    game_s = OVER;
+  }
+
+  
+	// V3: Move Bullet: detect hit or top of the screen. 
+  if(Bullet.life == ALIVE && Bullet.y > 0){
 		Bullet.y -=2;
 	}	
 	else{
-		Bullet.life = 0; //Didnt hit anything
+		Bullet.life = DEAD; //Didnt hit anything
 	}
 	for(i=0;i<3;i++){ //For each enemy alive
-		if(Enemy[i].life == 1 && Bullet.life == 1){
-			if(Enemy[i].x == Bullet.x && Bullet.y == Enemy[i].y ){
-					score++;
-					Enemy[i].life = 0;
-					Bullet.life = 0;
+		if(Enemy[i].life == 1 && Bullet.life == 1){  //if bullets and enemy[i] are alive
+			//check first x pixel of Bullet if between enemy.x and enemy.x+15
+			if((Bullet.y == Enemy[i].y ) && (Enemy[i].x <= Bullet.x <= Enemy[i].x+15)){
+				score++;
+				Enemy[i].life = DEAD;
+				Bullet.life = DEAD;		
 			}
-		
+			//check first x pixel of Bullet if between enemy.x and enemy.x+15
+			else if((Bullet.y == Enemy[i].y ) && (Enemy[i].x <= Bullet.x+1 <= Enemy[i].x+15)){
+				score++;
+				Enemy[i].life = DEAD;
+				Bullet.life = DEAD;		
+			}
 		}
 	}
-//  if (num_life==0) {
-//    game_s = false;
-//  }
-}
 
+
+
+
+
+	// V4: If a hit is detected, play the explosion sound
+}
 // Update the screen: 
 // clear display and update the screen with the 
 // current positions of all sprites that are alive.
@@ -434,66 +397,50 @@ void Draw(void){
   static uint8_t enemy_posture = CLOSE;  // enemy start with close posture: SmallEnemyPointA
   uint8_t i;
   
-  if (game_s==false) return;
+  //if (game_s==false) return;
   
   Nokia5110_ClearBuffer();
   
   // V1:Update live enemies' positions in display buffer: screen[]
   for(i=0;i<3;i++){
-    if(Enemy[i].life == 1){
+    if(Enemy[i].life == ALIVE){
      Nokia5110_PrintBMP(Enemy[i].x, Enemy[i].y, Enemy[i].image, 0);  // update screen[]
     }
   }
   
   // V2: Update the playership position in display buffer: screen[]
-  PlayerShip.x = x_axis;  //set to current pot value in order to prevent jump
-  Nokia5110_PrintBMP(PlayerShip.x, PlayerShip.y, PlayerShip.image, 0);  // update screen[]
-
-	if(Bullet.life == 1){
-	  Nokia5110_PrintBMP(Bullet.x, Bullet.y, Bullet.image, 0);  // update screen[]
-	}
-	
+  //PlayerShip.x = x_axis;  //set to current pot value in order to prevent jump
+	Nokia5110_PrintBMP(PlayerShip.x, PlayerShip.y, PlayerShip.image, 0);  // update screen[]
+ 
   // V3: Update the bullet position in display buffer if there is one.
-  //if (Bullet.life==ALIVE) {
+  if(Bullet.life == ALIVE){
+	  Nokia5110_PrintBMP(Bullet.x, Bullet.y, Bullet.image, 0);  // update screen[]
+	}	
 	
 	// V4: if bullet is just activated, play the shoot sound here
   //}
-
   Nokia5110_DisplayBuffer();      // Update the display with information in display buffer screen[].
 }
 
 // Control screen refresh rate. 
 void SysTick_Handler(void){
 	// signal time to refresh
+	time_to_draw = 1;
 }
 
 void GPIOPortF_Handler(void){    // called on release of either SW1 or SW2
 	// take care of button debounce
 	for(int i = 0; i < 1000000; i++){}
 	// SW1: shoot a bullet if there is none.
-  if((GPIO_PORTF_RIS_R&0x10) ){  // SW1 touch
+		if((GPIO_PORTF_RIS_R&0x10) ){  // SW1 touch
 		GPIO_PORTF_ICR_R = 0x10;  // acknowledge flag4	
 		bulletInit();
 	}
 	// SW2: start the game, change the game status to ON
 	if((GPIO_PORTF_RIS_R&0x01) ){  // SW2 touch
-		GPIO_PORTF_ICR_R = 0x01;  // acknowledge flag0	
-		game_s = true;
-		enemyInit();
+		GPIO_PORTF_ICR_R = 0x01;  // acknowledge flag4	
+		game_s = ON;
+		SysTick_Wait_0_1sec();
 	}
-}
-
-// Delay function used for game over prompt timing control: 2s
-// To Do: modify the time constant used in the code to generate approximately 2s delay.
-
-void Delay100ms(uint32_t count){
-  uint32_t time;
-  while(count>0){
-    time = 72724;  // 0.1sec at 16 MHz
-    while(time){
-	  	time--;
-    }
-    count--;
-  }
 }
 
