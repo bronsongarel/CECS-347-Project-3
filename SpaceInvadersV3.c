@@ -1,4 +1,4 @@
-// SpaceInvadersP1.c
+// SpaceInvadersP3.c
 // Runs on TM4C123
 // CECS 347 Project 3 - Space Invaders
 // Group number: 9
@@ -12,17 +12,17 @@
 // Onboard sw1(left push button): fire button 
 // Onboard sw2(right push button): game start button
 
-// Nokia 5110: interface with SSI2
+// Nokia 5110: interface with SSI3
 // ---------------
 // Signal        (Nokia 5110) LaunchPad pin
-// Reset         (RST) connected to ?
-// SSI0Fss       (CE) connected to ?
-// Data/Command  (DC) connected to ?
-// SSI0Tx        (Din) connected to ?
-// SSI0Clk       (Clk) connected to ?
-// 3.3V          (Vcc) power
-// back light    (BL) not connected, consists of 4 white LEDs which draw ~80mA total
-// Ground        (Gnd) ground
+// Reset         (RST, pin 1) connected to PB2
+// SSI0Fss       (CE,  pin 2) connected to PB5
+// Data/Command  (DC,  pin 3) connected to PB3
+// SSI0Tx        (Din, pin 4) connected to PB7
+// SSI0Clk       (Clk, pin 5) connected to PB4
+// 3.3V          (Vcc, pin 6) power branches here and to Back light
+// back light    (BL,  pin 7) connected to 3.3v
+// Ground        (Gnd, pin 8) ground
 /**/
 #include "tm4c123gh6pm.h"
 #include "Nokia5110.h"
@@ -443,4 +443,3 @@ void GPIOPortF_Handler(void){    // called on release of either SW1 or SW2
 		SysTick_Wait_0_1sec();
 	}
 }
-
