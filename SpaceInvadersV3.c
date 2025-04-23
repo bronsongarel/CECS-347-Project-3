@@ -1,4 +1,4 @@
-// SpaceInvadersV3.c
+// SpaceInvadersP1.c
 // Runs on TM4C123
 // CECS 347 Project 3 - Space Invaders
 // Group number: 9
@@ -12,17 +12,17 @@
 // Onboard sw1(left push button): fire button 
 // Onboard sw2(right push button): game start button
 
-// Nokia 5110: interface with SSI3
+// Nokia 5110: interface with SSI2
 // ---------------
 // Signal        (Nokia 5110) LaunchPad pin
-// Reset         (RST, pin 1) connected to PB2
-// SSI0Fss       (CE,  pin 2) connected to PB5
-// Data/Command  (DC,  pin 3) connected to PB3
-// SSI0Tx        (Din, pin 4) connected to PB7
-// SSI0Clk       (Clk, pin 5) connected to PB4
-// 3.3V          (Vcc, pin 6) power branches here and to Back light
-// back light    (BL,  pin 7) connected to 3.3v
-// Ground        (Gnd, pin 8) ground
+// Reset         (RST) connected to ?
+// SSI0Fss       (CE) connected to ?
+// Data/Command  (DC) connected to ?
+// SSI0Tx        (Din) connected to ?
+// SSI0Clk       (Clk) connected to ?
+// 3.3V          (Vcc) power
+// back light    (BL) not connected, consists of 4 white LEDs which draw ~80mA total
+// Ground        (Gnd) ground
 /**/
 #include "tm4c123gh6pm.h"
 #include "Nokia5110.h"
@@ -217,7 +217,7 @@ uint16_t count = 0;
 char out[100];
 uint8_t x_axis;
 void bulletInit(void);
-
+int checkHit(uint8_t checkNumber);
 int main(void){
 	System_Init();
 
@@ -299,7 +299,7 @@ void Start_Prompt(void){
 void End_Prompt(void){
   uint8_t prompt[]="            Game Over   Nice Try!   Your Score";
   Nokia5110_Clear();
-	sprintf(out , "%s %d ",prompt, 2);
+	sprintf(out , "%s %d ",prompt, score);
   Nokia5110_OutString(out);
 	SysTick_BusyWait_0_1sec(THREE_SECONDS);
 }
@@ -320,7 +320,7 @@ void Game_Init(void){
 
 // Update positions for all alive sprites.
 void Move(void){
-  //uint8_t num_life = 0;
+  uint8_t num_dead = 0;
   
   // V1: Move enemies: modify x, check life:alive or dead: dead if right side reaches right screen border or detect a hit
   // Change postures for the enemies: two postures: open/close arms/legs
@@ -329,67 +329,91 @@ void Move(void){
   for(i=0;i<3;i++){
 		if(Enemy[i].life == ALIVE){
 			if(Enemy[i].x < MAX_X_AXIS){
-				if(Enemy[i].x % 2 == 1){ //odd number
-					Enemy[i].image = SmallEnemyPointB[i];
-
-				}
-				else{
-					Enemy[i].image = SmallEnemyPointA[i];
-					
-				}
+				if(Enemy[i].x % 2 == 1){  Enemy[i].image = SmallEnemyPointB[i]; }
+				else{ Enemy[i].image = SmallEnemyPointA[i];	}
 				Enemy[i].x += 1;
 			}else{
 				Enemy[i].life = DEAD;
+				num_dead++;
       }  
     }
 	}
-
 	// V2: Read ADC and update player ship position: only x coordinate will be changed.
   x_axis = ADCValue_To_X_AXIS(ADC1_SS3_In(),MAX_X_AXIS);	
-  //PlayerShip.x = x_axis;  //set to current pot value in order to prevent jump
-  if(x_axis < 62){
-		PlayerShip.x = x_axis; 
-	}
-	else{
-		PlayerShip.x = 61; 
-	}
-	Nokia5110_PrintBMP(PlayerShip.x, PlayerShip.y, PlayerShip.image, 0);  // update screen[]
-
-  if (Enemy[0].life==DEAD) {
-    game_s = OVER;
-  }
-
-  
+  if(x_axis < 62){PlayerShip.x = x_axis; }
+	else{PlayerShip.x = 61;	}
+	//Nokia5110_PrintBMP(PlayerShip.x, PlayerShip.y, PlayerShip.image, 0);  // update screen[]
 	// V3: Move Bullet: detect hit or top of the screen. 
-  if(Bullet.life == ALIVE && Bullet.y > 0){
-		Bullet.y -=2;
-	}	
-	else{
-		Bullet.life = DEAD; //Didnt hit anything
-	}
-	for(i=0;i<3;i++){ //For each enemy alive
-		if(Enemy[i].life == 1 && Bullet.life == 1){  //if bullets and enemy[i] are alive
-			//check first x pixel of Bullet if between enemy.x and enemy.x+15
-			if((Bullet.y == Enemy[i].y ) && (Enemy[i].x <= Bullet.x <= Enemy[i].x+15)){
-				score++;
-				Enemy[i].life = DEAD;
-				Bullet.life = DEAD;		
-			}
-			//check first x pixel of Bullet if between enemy.x and enemy.x+15
-			else if((Bullet.y == Enemy[i].y ) && (Enemy[i].x <= Bullet.x+1 <= Enemy[i].x+15)){
-				score++;
-				Enemy[i].life = DEAD;
-				Bullet.life = DEAD;		
-			}
+	Bullet.y -= 2; 
+	for(int i = 0; i < 3; i++){
+		if(checkHit(i)){
+			Enemy[i].life = DEAD;
+			Bullet.life = DEAD;
+			score++;
+			num_dead++;
 		}
 	}
-
-
-
+	
 
 
 	// V4: If a hit is detected, play the explosion sound
+	if (num_dead == 3) { game_s = OVER; }
 }
+
+
+
+//Called after bullet moves in Move(). Checks each enemy with
+//the bullets position and determines which one, if any, were hit
+
+
+
+struct Check {
+  uint8_t x;      // x coordinate
+  uint8_t y;      // y coordinate
+}; 
+typedef struct Check CTyp;
+CTyp l1,l2,r1,r2;
+
+int checkHit(uint8_t checkNumber){
+	if(Bullet.x > Enemy[checkNumber].x){
+		l1.x = Enemy[checkNumber].x;		
+		l1.y = Enemy[checkNumber].y + 8;
+		r1.x = Enemy[checkNumber].x + 7;		
+		r1.y = Enemy[checkNumber].y;
+		
+		
+		
+		l2.x = Bullet.x;		
+		l2.y = Bullet.y + 8;
+		r2.x = Bullet.x + 1;		
+		r2.y = Bullet.y;
+	}
+	else{
+			
+		l1.x = Bullet.x;		
+		l1.y = Bullet.y + 8;
+		r1.x = Bullet.x + 1;		
+		r1.y = Bullet.y;
+		
+		
+		l2.x = Enemy[checkNumber].x;		
+		l2.y = Enemy[checkNumber].y + 8;
+		r2.x = Enemy[checkNumber].x + 7;		
+		r2.y = Enemy[checkNumber].y;
+			
+	}
+	if (l1.x > r2.x || l2.x > r1.x)
+		return 0;
+
+	// If one rectangle is above the other
+	if (r1.y > l2.y || r2.y > l1.y)
+		return 0;
+
+	return 1;
+}
+	
+	
+
 // Update the screen: 
 // clear display and update the screen with the 
 // current positions of all sprites that are alive.
@@ -434,7 +458,9 @@ void GPIOPortF_Handler(void){    // called on release of either SW1 or SW2
 	// SW1: shoot a bullet if there is none.
 		if((GPIO_PORTF_RIS_R&0x10) ){  // SW1 touch
 		GPIO_PORTF_ICR_R = 0x10;  // acknowledge flag4	
-		bulletInit();
+		if(Bullet.life == DEAD){
+			bulletInit();
+		}
 	}
 	// SW2: start the game, change the game status to ON
 	if((GPIO_PORTF_RIS_R&0x01) ){  // SW2 touch
@@ -443,3 +469,4 @@ void GPIOPortF_Handler(void){    // called on release of either SW1 or SW2
 		SysTick_Wait_0_1sec();
 	}
 }
+
